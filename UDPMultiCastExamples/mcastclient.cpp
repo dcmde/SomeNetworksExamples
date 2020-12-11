@@ -14,21 +14,20 @@ char databuf[1024];
 
 using namespace std;
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
 
-    if(argc < 4){
-        std::cout << "Please enter : group_ip local_ip port" << std::endl;
+    if (argc < 3) {
+        std::cout << "Please enter : group_ip port" << std::endl;
         return 0;
     }
 
-    const char* gourpIp = argv[1];
-    const char* localIp = argv[2];
-    int port = atoi(argv[3]);
+    const char *gourpIp = argv[1];
+    int port = atoi(argv[2]);
 
     // Create a datagram socket on which to receive.
     sd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    if(sd < 0) {
+    if (sd < 0) {
         perror("Opening datagram socket error");
         exit(1);
     }
@@ -39,8 +38,7 @@ int main(int argc, char *argv[]){
     // application to receive copies of the multicast datagrams.
     {
         int reuse = 1;
-        if(setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(reuse)) < 0)
-        {
+        if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(reuse)) < 0) {
             perror("Setting SO_REUSEADDR error");
             close(sd);
             exit(1);
@@ -57,23 +55,19 @@ int main(int argc, char *argv[]){
     localSock.sin_port = htons(port);
     localSock.sin_addr.s_addr = INADDR_ANY;
 
-    if(bind(sd, (struct sockaddr*)&localSock, sizeof(localSock))) {
+    if (bind(sd, (struct sockaddr *) &localSock, sizeof(localSock))) {
         perror("Binding datagram socket error");
         close(sd);
         exit(1);
     }
-    else
+    else {
         printf("Binding datagram socket...OK.\n");
-
-    // Join the multicast group 226.1.1.1 on the local 203.106.93.94
-    // interface. Note that this IP_ADD_MEMBERSHIP option must be
-    // called for each local interface over which the multicast
-    // datagrams are to be received.
+    }
 
     group.imr_multiaddr.s_addr = inet_addr(gourpIp);
-    group.imr_interface.s_addr = inet_addr(localIp);
+    group.imr_interface.s_addr = INADDR_ANY;
 
-    if(setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0) {
+    if (setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &group, sizeof(group)) < 0) {
         perror("Adding multicast group error");
         close(sd);
         exit(1);
@@ -81,10 +75,10 @@ int main(int argc, char *argv[]){
     else {
         printf("Adding multicast group...OK.\n");
     }
+
     // Read from the socket.
     datalen = sizeof(databuf);
-
-    while(1) {
+    while (1) {
         if (read(sd, databuf, datalen) < 0) {
             perror("Reading datagram message error");
             close(sd);
