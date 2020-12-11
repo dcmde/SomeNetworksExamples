@@ -48,6 +48,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Disable IP_MULTICAST_ALL to get only messages related to the given IP group.
+    int mc_all = 0;
+    if (setsockopt(sd, IPPROTO_IP, IP_MULTICAST_ALL, (char *)&mc_all, sizeof(mc_all)) < 0) {
+        perror("Setting IP_MULTICAST_ALL error");
+        close(sd);
+        exit(1);
+    }
+
     // Bind to the proper port number with the IP address
     // specified as INADDR_ANY.
     memset((char *) &localSock, 0, sizeof(localSock));
