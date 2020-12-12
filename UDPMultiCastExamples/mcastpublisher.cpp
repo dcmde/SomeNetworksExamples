@@ -1,5 +1,3 @@
-/* Server Send Multicast Datagram code example. */
-
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -11,20 +9,19 @@
 #include <unistd.h>
 
 struct in_addr localInterface;
-struct sockaddr_in groupSock;
+struct sockaddr_in group;
 int sd;
 char databuf[1024] = "Multicast test message lol!";
 int datalen = sizeof(databuf);
 
-
 int main(int argc, char *argv[]) {
 
-    if (argc < 3) {
-        std::cout << "Please enter : group_ip port" << std::endl;
+    if (argc != 3) {
+        std::cout << "Please enter : ip_group port" << std::endl;
         return 0;
     }
 
-    const char *groupIp = argv[1];
+    const char *ip_group = argv[1];
     int port = atoi(argv[2]);
 
     try {
@@ -38,19 +35,20 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    memset((char *) &groupSock, 0, sizeof(groupSock));
-    groupSock.sin_family = AF_INET;
-    groupSock.sin_addr.s_addr = inet_addr(groupIp);
-    groupSock.sin_port = htons(port);
+    memset((char *) &group, 0, sizeof(group));
+    group.sin_family = AF_INET;
+    group.sin_port = htons(port);
 
+    if (inet_aton(ip_group, &group.sin_addr) < 0) {
+        std::cerr << "Error inet_aton()" << std::endl;
+    }
+
+    // The flag has to be changed depending on the application.
     char loopch = 1;
     if (setsockopt(sd, IPPROTO_IP, IP_MULTICAST_LOOP, (char *) &loopch, sizeof(loopch)) < 0) {
         perror("Setting IP_MULTICAST_LOOP error");
         close(sd);
         exit(1);
-    }
-    else {
-        printf("Disabling the loopback...OK.\n");
     }
 
     localInterface.s_addr = INADDR_ANY;
@@ -62,7 +60,7 @@ int main(int argc, char *argv[]) {
         printf("Setting the local interface...OK\n");
     }
 
-    if (sendto(sd, databuf, datalen, 0, (struct sockaddr *) &groupSock, sizeof(groupSock)) < 0) {
+    if (sendto(sd, databuf, datalen, 0, (struct sockaddr *) &group, sizeof(group)) < 0) {
         perror("Sending datagram message error");
     }
     else {

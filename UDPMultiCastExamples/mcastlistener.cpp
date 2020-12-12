@@ -1,3 +1,6 @@
+/*
+ * listen to the given group on the given port.
+ */
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -34,36 +37,32 @@ int main(int argc, char *argv[]) {
     else {
         printf("Opening datagram socket....OK.\n");
     }
-    // Enable SO_REUSEADDR to allow multiple instances of this
-    // application to receive copies of the multicast datagrams.
-    {
-        int reuse = 1;
-        if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(reuse)) < 0) {
-            perror("Setting SO_REUSEADDR error");
-            close(sd);
-            exit(1);
-        }
-        else {
-            printf("Setting SO_REUSEADDR...OK.\n");
-        }
+
+    int reuse = 1;
+    if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(reuse)) < 0) {
+        perror("Setting SO_REUSEADDR error");
+        close(sd);
+        exit(1);
     }
+    else {
+        printf("Setting SO_REUSEADDR...OK.\n");
+    }
+
 
     // Disable IP_MULTICAST_ALL to get only messages related to the given IP group.
     int mc_all = 0;
-    if (setsockopt(sd, IPPROTO_IP, IP_MULTICAST_ALL, (char *)&mc_all, sizeof(mc_all)) < 0) {
+    if (setsockopt(sd, IPPROTO_IP, IP_MULTICAST_ALL, (char *) &mc_all, sizeof(mc_all)) < 0) {
         perror("Setting IP_MULTICAST_ALL error");
         close(sd);
         exit(1);
     }
 
-    // Bind to the proper port number with the IP address
-    // specified as INADDR_ANY.
     memset((char *) &localSock, 0, sizeof(localSock));
     localSock.sin_family = AF_INET;
     localSock.sin_port = htons(port);
     localSock.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(sd, (struct sockaddr *) &localSock, sizeof(localSock))) {
+    if (bind(sd, (struct sockaddr *) &localSock, sizeof(localSock)) < 0) {
         perror("Binding datagram socket error");
         close(sd);
         exit(1);
