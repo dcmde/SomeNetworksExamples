@@ -2,6 +2,7 @@
  * listen to the given group on the given port.
  */
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <cstdio>
@@ -9,8 +10,9 @@
 #include <unistd.h>
 #include <iostream>
 
-struct sockaddr_in localSock;
+struct sockaddr_in localAddr, publisherAddr;
 struct ip_mreq group;
+socklen_t publisherAddr_size;
 int sd;
 int datalen;
 char databuf[1024];
@@ -57,12 +59,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    memset((char *) &localSock, 0, sizeof(localSock));
-    localSock.sin_family = AF_INET;
-    localSock.sin_port = htons(port);
-    localSock.sin_addr.s_addr = INADDR_ANY;
+    memset((char *) &localAddr, 0, sizeof(localAddr));
+    localAddr.sin_family = AF_INET;
+    localAddr.sin_port = htons(port);
+    localAddr.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(sd, (struct sockaddr *) &localSock, sizeof(localSock)) < 0) {
+    if (bind(sd, (struct sockaddr *) &localAddr, sizeof(localAddr)) < 0) {
         perror("Binding datagram socket error");
         close(sd);
         exit(1);
@@ -85,15 +87,16 @@ int main(int argc, char *argv[]) {
 
     // Read from the socket.
     datalen = sizeof(databuf);
+    publisherAddr_size = sizeof(publisherAddr);
     while (1) {
-        if (read(sd, databuf, datalen) < 0) {
+
+        if (recvfrom(sd, databuf, datalen, 0, (struct sockaddr *) &publisherAddr, &publisherAddr_size) < 0) {
             perror("Reading datagram message error");
             close(sd);
             exit(1);
         }
         else {
-            printf("Reading datagram message...OK.\n");
-            printf("The message from multicast server is: \"%s\"\n", databuf);
+            printf("The message is %s from ip %s and port %u\n", databuf, inet_ntoa(publisherAddr.sin_addr), ntohs(publisherAddr.sin_port));
         }
     }
     return 0;
