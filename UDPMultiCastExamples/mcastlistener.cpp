@@ -9,10 +9,13 @@
 #include <cstring>
 #include <unistd.h>
 #include <iostream>
+#include <poll.h>
 
 struct sockaddr_in localAddr, publisherAddr;
 struct ip_mreq group;
+struct pollfd pollfd_struct;
 socklen_t publisherAddr_size;
+struct timeval read_timeout;
 int sd;
 int datalen;
 char databuf[1024];
@@ -88,15 +91,32 @@ int main(int argc, char *argv[]) {
     // Read from the socket.
     datalen = sizeof(databuf);
     publisherAddr_size = sizeof(publisherAddr);
+
+    memset(&pollfd_struct, 0, sizeof(pollfd_struct));
+    pollfd_struct.fd = sd;
+    pollfd_struct.events = POLLIN;
+
     while (1) {
 
-        if (recvfrom(sd, databuf, datalen, 0, (struct sockaddr *) &publisherAddr, &publisherAddr_size) < 0) {
-            perror("Reading datagram message error");
+        if (poll(&pollfd_struct, 1, -1) < 0) {
+            perror("Polling error");
             close(sd);
             exit(1);
         }
         else {
-            printf("The message is %s from ip %s and port %u\n", databuf, inet_ntoa(publisherAddr.sin_addr), ntohs(publisherAddr.sin_port));
+            printf("Poll returned ... OK.\n");
+        }
+
+        if (pollfd_struct.revents == POLLIN) {
+            if (recvfrom(sd, databuf, datalen, 0, (struct sockaddr *) &publisherAddr, &publisherAddr_size) < 0) {
+                perror("Reading datagram message error");
+                close(sd);
+                exit(1);
+            }
+            else {
+                printf("The message is %s from ip %s and port %u\n", databuf, inet_ntoa(publisherAddr.sin_addr),
+                       ntohs(publisherAddr.sin_port));
+            }
         }
     }
     return 0;
