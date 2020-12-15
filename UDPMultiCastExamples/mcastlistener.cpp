@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
                 exit(1);
             }
             else {
-                printf("The message is %s from ip %s and port %u\n", databuf, inet_ntoa(publisherAddr.sin_addr),
+                printf("The message is : %s from ip %s and port %u\n", databuf, inet_ntoa(publisherAddr.sin_addr),
                        ntohs(publisherAddr.sin_port));
             }
         }
