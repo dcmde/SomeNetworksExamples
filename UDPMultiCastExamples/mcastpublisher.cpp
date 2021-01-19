@@ -11,15 +11,31 @@
 struct in_addr localInterface;
 struct sockaddr_in group;
 int sd;
-char databuf[1024] = "Multicast test message lol!";
+char databuf[1024] = {0};
 int datalen = sizeof(databuf);
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 3) {
+    if (argc < 3) {
         std::cout << "Please enter : ip_group port" << std::endl;
         return 0;
     }
+
+    int cpt = 0;
+    for(int i = 3; i < argc; ++i){
+	for(int j=0; j < strlen(argv[i]); ++j){
+	    databuf[cpt] = argv[i][j];
+            cpt++;
+ 	}
+        databuf[cpt] = ' ';
+    cpt++;
+    }
+
+   for(int i = 0; i < 20; ++i){
+      printf("%c", databuf[i]);
+   }
+
+   printf("\n");
 
     const char *ip_group = argv[1];
     int port = atoi(argv[2]);

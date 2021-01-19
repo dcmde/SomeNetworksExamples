@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <poll.h>
+#include <string>
 
 struct sockaddr_in localAddr, publisherAddr;
 struct ip_mreq group;
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
     }
 
     const char *gourpIp = argv[1];
+
     int port = atoi(argv[2]);
 
     // Create a datagram socket on which to receive.
@@ -63,6 +65,8 @@ int main(int argc, char *argv[]) {
     }
 
     memset((char *) &localAddr, 0, sizeof(localAddr));
+    // The flag has to be changed depending on the application.
+
     localAddr.sin_family = AF_INET;
     localAddr.sin_port = htons(port);
     localAddr.sin_addr.s_addr = INADDR_ANY;
@@ -98,13 +102,10 @@ int main(int argc, char *argv[]) {
 
     while (1) {
 
-        if (poll(&pollfd_struct, 1, -1) < 0) {
+        if (poll(&pollfd_struct, 1, 0) < 0) {
             perror("Polling error");
             close(sd);
             exit(1);
-        }
-        else {
-            printf("Poll returned ... OK.\n");
         }
 
         if (pollfd_struct.revents == POLLIN) {
